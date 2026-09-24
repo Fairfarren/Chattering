@@ -62,6 +62,85 @@ test("受限话题之后仍可继续普通聊天", () => {
   );
 });
 
+test("角色准确回答双方累计消息数量", () => {
+  const result = prepareChat({
+    ...makeInput(),
+    messages: [
+      { role: "user", content: "你好" },
+      { role: "assistant", content: "你好呀" },
+      { role: "user", content: "我们聊了多少句话？" },
+    ],
+  });
+
+  assert.equal(
+    result.kind === "text" ? result.text : "",
+    "截至你刚发的这句，你发了2条，我回复了1条，共3条消息。",
+  );
+});
+
+test("角色能从完整记录找出用户第三句话", () => {
+  const result = prepareChat({
+    ...makeInput(),
+    messages: [
+      { role: "user", content: "你好" },
+      { role: "assistant", content: "你好呀" },
+      { role: "user", content: "我在画画" },
+      { role: "assistant", content: "画什么" },
+      { role: "user", content: "一只猫" },
+      { role: "assistant", content: "真可爱" },
+      { role: "user", content: "我跟你说的第三句话是什么？" },
+    ],
+  });
+
+  assert.equal(
+    result.kind === "text" ? result.text : "",
+    "你说的第3条是：“一只猫”",
+  );
+});
+
+test("角色能从完整记录找出自己的第一句话", () => {
+  const result = prepareChat({
+    ...makeInput(),
+    messages: [
+      { role: "user", content: "你好" },
+      { role: "assistant", content: "你好呀" },
+      { role: "user", content: "你第一句话是什么？" },
+    ],
+  });
+
+  assert.equal(
+    result.kind === "text" ? result.text : "",
+    "我说的第1条是：“你好呀”",
+  );
+});
+
+test("超出记录范围的序号不会猜测", () => {
+  const result = prepareChat({
+    ...makeInput(),
+    messages: [{ role: "user", content: "你第十句话是什么？" }],
+  });
+
+  assert.equal(
+    result.kind === "text" ? result.text : "",
+    "我到目前为止只说了0条，还没有第10条。",
+  );
+});
+
+test("超过旧二十条窗口仍能统计全部对话", () => {
+  const messages = Array.from({ length: 24 }, (_, index) => ({
+    role: (index % 2 === 0 ? "user" : "assistant") as "user" | "assistant",
+    content: `第${index + 1}条`,
+  }));
+  messages.push({ role: "user", content: "我们聊了多少句话？" });
+
+  const result = prepareChat({ ...makeInput(), messages });
+
+  assert.equal(
+    result.kind === "text" ? result.text : "",
+    "截至你刚发的这句，你发了13条，我回复了12条，共25条消息。",
+  );
+});
+
 test("政治话题会被拒绝", () => {
   assert.equal(isBlockedTopic("聊聊选举吧"), true);
 });

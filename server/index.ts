@@ -11,7 +11,7 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const port = Number(process.env.PORT || 3000);
 const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
 const apiKey = process.env.OLLAMA_API_KEY;
-const maxBodyBytes = 64 * 1024;
+const maxBodyBytes = 4 * 1024 * 1024;
 const requestTimeoutMs = 120_000;
 
 function errorMessage(error: unknown) {

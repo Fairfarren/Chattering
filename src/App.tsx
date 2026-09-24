@@ -154,9 +154,10 @@ export function App() {
         body: JSON.stringify({
           characterId,
           model: chatModel,
-          messages: conversation
-            .slice(-20)
-            .map((entry) => ({ role: entry.role, content: entry.text })),
+          messages: conversation.map((entry) => ({
+            role: entry.role,
+            content: entry.text,
+          })),
         }),
       });
       const data = (await response.json()) as ChatResponse;
