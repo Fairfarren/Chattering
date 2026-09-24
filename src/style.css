@@ -73,13 +73,6 @@ textarea:focus-visible {
   letter-spacing: 0.12em;
   line-height: 1.1;
 }
-.brand-name span {
-  margin-left: 4px;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  color: #987e73;
-  font-weight: 700;
-}
 .brand-subtitle {
   margin-top: 6px;
   font-size: 10px;

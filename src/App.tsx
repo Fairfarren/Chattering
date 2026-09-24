@@ -216,9 +216,7 @@ export function App() {
             <Sparkles size={18} strokeWidth={1.8} />
           </div>
           <div>
-            <div className="brand-name">
-              絮语 <span>XUYU</span>
-            </div>
+            <div className="brand-name">絮语</div>
             <div className="brand-subtitle">每段对话，都有温度</div>
           </div>
         </div>
@@ -331,9 +329,7 @@ export function App() {
                   <div className="portrait-orbit orbit-one" />
                   <div className="portrait-orbit orbit-two" />
                 </div>
-                <div className="welcome-overline">
-                  MEET {active.id.toUpperCase()}
-                </div>
+                <div className="welcome-overline">初次见面</div>
                 <h1>
                   和{active.card.data.name}，<br />
                   <em>聊聊今天。</em>
@@ -472,7 +468,7 @@ export function App() {
       <aside className="profile-panel">
         <div className="profile-heading">
           <span>角色档案</span>
-          <span>ABOUT</span>
+          <span>角色设定</span>
         </div>
         <div className="profile-photo">
           <img src={portrait} alt={`${active.card.data.name}的照片`} />
@@ -483,7 +479,7 @@ export function App() {
         </div>
         <div className="profile-name-row">
           <div>
-            <span className="profile-overline">YOUR COMPANION</span>
+            <span className="profile-overline">你的聊天伙伴</span>
             <h2>{active.card.data.name}</h2>
           </div>
           <div className="profile-sparkle">
