@@ -3,6 +3,8 @@ import {
   isBlockedTopic,
   maxMessageLength,
   maxSummaryLength,
+  minCompactMessages,
+  recentMessageCount,
   summaryBatchSize,
   topicRefusal,
   visibleMessage,
@@ -38,7 +40,7 @@ type PreparedChat =
   | { kind: "photo"; text: string; photo: string }
   | { kind: "model"; body: OllamaBody };
 
-const maxRecentMessages = 19;
+const maxRecentMessages = recentMessageCount + minCompactMessages - 1;
 const maxTotalCount = 1_000_000;
 const photoRequest = /照片|相片|图片|自拍|看看你|发张图|photo|picture|selfie/i;
 

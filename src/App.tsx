@@ -183,11 +183,10 @@ export function App() {
       role: entry.role,
       content: entry.text,
     }));
-    if (
-      !modelReady &&
-      !isBlockedTopic(text) &&
-      !answerHistoryQuestion(chatMessages)
-    ) {
+    const localAnswer = isBlockedTopic(text)
+      ? topicRefusal
+      : answerHistoryQuestion(chatMessages);
+    if (!modelReady && !localAnswer) {
       setChatError("请先连接 Ollama 并确认聊天模型可用。");
       return;
     }
@@ -197,9 +196,6 @@ export function App() {
     setBusy(true);
 
     try {
-      const localAnswer = isBlockedTopic(text)
-        ? topicRefusal
-        : answerHistoryQuestion(chatMessages);
       if (localAnswer) {
         addEntry(
           characterId,
