@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { characters, findCharacter } from "../characters";
+import { extractVisibleReply, incompleteReply } from "../reply";
 
 type ChatEntry = {
   id: string;
@@ -232,6 +233,10 @@ export function App() {
             const image = character.card.data.assets[0].uri;
             const selected = character.id === activeId;
             const last = history[character.id]?.at(-1);
+            const preview =
+              last?.role === "assistant"
+                ? (extractVisibleReply(last.text) ?? incompleteReply)
+                : last?.text;
             return (
               <button
                 key={character.id}
@@ -244,7 +249,7 @@ export function App() {
                 </span>
                 <span className="character-item-copy">
                   <strong>{character.card.data.name}</strong>
-                  <small>{last?.text || character.subtitle}</small>
+                  <small>{preview || character.subtitle}</small>
                 </span>
                 {last && <span className="last-time">{last.time}</span>}
               </button>
@@ -390,7 +395,9 @@ export function App() {
                         </span>
                       </button>
                     )}
-                    {message.text}
+                    {message.role === "assistant"
+                      ? (extractVisibleReply(message.text) ?? incompleteReply)
+                      : message.text}
                   </div>
                 </div>
               </div>

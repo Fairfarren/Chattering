@@ -1,4 +1,5 @@
 import { findCharacter } from "../characters.ts";
+import { extractVisibleReply, incompleteReply } from "../reply.ts";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 export type ChatInput = {
@@ -84,10 +85,15 @@ export function prepareChat(input: ChatInput): PreparedChat {
   }
 
   const data = character.card.data;
-  const safeMessages = messages.filter(
-    (message) =>
-      !isBlockedTopic(message.content) && message.content !== topicRefusal,
-  );
+  const safeMessages = messages.flatMap((message) => {
+    const content =
+      message.role === "assistant"
+        ? extractVisibleReply(message.content)
+        : message.content;
+    return content && !isBlockedTopic(content) && content !== topicRefusal
+      ? [{ role: message.role, content }]
+      : [];
+  });
   const system = [
     `你正在扮演${data.name}。`,
     `角色背景：${data.description}`,
@@ -113,5 +119,6 @@ export function safeReply(content: unknown) {
   if (typeof content !== "string" || !content.trim()) {
     throw new Error("Ollama 未返回有效回复");
   }
-  return isBlockedTopic(content) ? topicRefusal : content.trim();
+  const visible = extractVisibleReply(content) ?? incompleteReply;
+  return isBlockedTopic(visible) ? topicRefusal : visible;
 }

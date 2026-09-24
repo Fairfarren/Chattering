@@ -15,5 +15,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["src", "server", "characters.ts", "vite.config.ts"]
+  "include": ["src", "server", "characters.ts", "reply.ts", "vite.config.ts"]
 }
