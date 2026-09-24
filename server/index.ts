@@ -4,14 +4,19 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ViteDevServer } from "vite";
-import { prepareChat, safeReply } from "./chat.ts";
-import type { ChatInput } from "./chat.ts";
+import {
+  buildSummaryBody,
+  prepareChat,
+  safeReply,
+  summaryReply,
+} from "./chat.ts";
+import type { ChatInput, CompactInput } from "./chat.ts";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const port = Number(process.env.PORT || 3000);
 const ollamaBaseUrl = process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
 const apiKey = process.env.OLLAMA_API_KEY;
-const maxBodyBytes = 4 * 1024 * 1024;
+const maxBodyBytes = 128 * 1024;
 const requestTimeoutMs = 120_000;
 
 function errorMessage(error: unknown) {
@@ -25,16 +30,18 @@ function sendJson(response: ServerResponse, status: number, body: unknown) {
   response.end(JSON.stringify(body));
 }
 
-async function readBody(request: IncomingMessage): Promise<ChatInput> {
+async function readBody(request: IncomingMessage): Promise<unknown> {
   let raw = "";
+  let bytes = 0;
   for await (const chunk of request) {
-    raw += chunk;
-    if (raw.length > maxBodyBytes) {
+    bytes += chunk.length;
+    if (bytes > maxBodyBytes) {
       throw new Error("请求内容过大");
     }
+    raw += chunk;
   }
   try {
-    return JSON.parse(raw) as ChatInput;
+    return JSON.parse(raw) as unknown;
   } catch {
     throw new Error("请求必须是有效 JSON");
   }
@@ -91,7 +98,7 @@ async function handleApi(request: IncomingMessage, response: ServerResponse) {
   if (request.method === "POST" && request.url === "/api/chat") {
     let prepared;
     try {
-      prepared = prepareChat(await readBody(request));
+      prepared = prepareChat((await readBody(request)) as ChatInput);
     } catch (error) {
       sendJson(response, 400, { error: errorMessage(error) });
       return true;
@@ -118,6 +125,41 @@ async function handleApi(request: IncomingMessage, response: ServerResponse) {
       });
     } catch (error) {
       sendJson(response, 503, { error: `聊天失败：${errorMessage(error)}` });
+    }
+    return true;
+  }
+
+  if (request.method === "POST" && request.url === "/api/compact") {
+    let input: CompactInput;
+    let body;
+    try {
+      input = (await readBody(request)) as CompactInput;
+      body = buildSummaryBody(input);
+    } catch (error) {
+      sendJson(response, 400, { error: errorMessage(error) });
+      return true;
+    }
+    if (!body) {
+      sendJson(response, 200, { summary: input.previousSummary });
+      return true;
+    }
+    try {
+      const models = await listModels();
+      if (!models.some((model) => model.name === body.model)) {
+        sendJson(response, 400, { error: "所选模型在 Ollama 中不存在" });
+        return true;
+      }
+      const result = (await ollamaRequest("/api/chat", {
+        method: "POST",
+        body: JSON.stringify(body),
+      })) as { message?: { content?: string } };
+      sendJson(response, 200, {
+        summary: summaryReply(result.message?.content),
+      });
+    } catch (error) {
+      sendJson(response, 503, {
+        error: `整理记忆失败：${errorMessage(error)}`,
+      });
     }
     return true;
   }

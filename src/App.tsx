@@ -13,6 +13,14 @@ import {
   X,
 } from "lucide-react";
 import { characters, findCharacter } from "../characters";
+import {
+  answerHistoryQuestion,
+  isBlockedTopic,
+  nextCompactBatch,
+  normalizeMemory,
+  topicRefusal,
+} from "../conversation";
+import type { ChatMessage, ConversationMemory } from "../conversation";
 import { extractVisibleReply, incompleteReply } from "../reply";
 
 type ChatEntry = {
@@ -29,8 +37,10 @@ type ChatResponse = {
   photo?: string;
   error?: string;
 };
+type CompactResponse = { summary?: string; error?: string };
 
 const storageKey = "xuyu-conversations-v1";
+const memoryKey = "xuyu-memories-v1";
 const chatModel = "kimi-k2.7-code:cloud";
 
 function makeEntry(
@@ -71,9 +81,37 @@ function readHistory(): Record<string, ChatEntry[]> {
   }
 }
 
+function readMemories(): Record<string, ConversationMemory> {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(memoryKey) || "{}");
+    if (!saved || typeof saved !== "object" || Array.isArray(saved)) {
+      return {};
+    }
+    const validEntries = Object.entries(saved).filter(
+      (entry): entry is [string, ConversationMemory] => {
+        const value = entry[1];
+        return (
+          Boolean(findCharacter(entry[0])) &&
+          value !== null &&
+          typeof value === "object" &&
+          "summary" in value &&
+          typeof value.summary === "string" &&
+          "summarizedCount" in value &&
+          Number.isInteger(value.summarizedCount) &&
+          Number(value.summarizedCount) >= 0
+        );
+      },
+    );
+    return Object.fromEntries(validEntries);
+  } catch {
+    return {};
+  }
+}
+
 export function App() {
   const [activeId, setActiveId] = useState(characters[0].id);
   const [history, setHistory] = useState(readHistory);
+  const [memories, setMemories] = useState(readMemories);
   const [modelReady, setModelReady] = useState(false);
   const [modelError, setModelError] = useState("");
   const [draft, setDraft] = useState("");
@@ -91,6 +129,10 @@ export function App() {
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(history));
   }, [history]);
+
+  useEffect(() => {
+    localStorage.setItem(memoryKey, JSON.stringify(memories));
+  }, [memories]);
 
   useEffect(() => {
     if (messages.length || busy) {
@@ -134,30 +176,77 @@ export function App() {
     if (!text || busy) {
       return;
     }
-    if (!modelReady) {
-      setChatError("请先连接 Ollama 并确认聊天模型可用。");
-      return;
-    }
-
     const characterId = activeId;
     const outgoing = makeEntry({ role: "user", text });
     const conversation = [...messages, outgoing];
+    const chatMessages: ChatMessage[] = conversation.map((entry) => ({
+      role: entry.role,
+      content: entry.text,
+    }));
+    if (
+      !modelReady &&
+      !isBlockedTopic(text) &&
+      !answerHistoryQuestion(chatMessages)
+    ) {
+      setChatError("请先连接 Ollama 并确认聊天模型可用。");
+      return;
+    }
     addEntry(characterId, outgoing);
     setDraft("");
     setChatError("");
     setBusy(true);
 
     try {
+      const localAnswer = isBlockedTopic(text)
+        ? topicRefusal
+        : answerHistoryQuestion(chatMessages);
+      if (localAnswer) {
+        addEntry(
+          characterId,
+          makeEntry({ role: "assistant", text: localAnswer }),
+        );
+        return;
+      }
+
+      let memory = normalizeMemory(memories[characterId], chatMessages.length);
+      let batch = nextCompactBatch(chatMessages, memory);
+      while (batch.length) {
+        const response = await fetch("/api/compact", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            characterId,
+            model: chatModel,
+            previousSummary: memory.summary,
+            messages: batch,
+          }),
+        });
+        const data = (await response.json()) as CompactResponse;
+        if (!response.ok || typeof data.summary !== "string") {
+          throw new Error(data.error || "整理聊天记忆失败");
+        }
+        memory = {
+          summary: data.summary,
+          summarizedCount: memory.summarizedCount + batch.length,
+        };
+        setMemories((current) => ({ ...current, [characterId]: memory }));
+        batch = nextCompactBatch(chatMessages, memory);
+      }
+      const counts = {
+        user: chatMessages.filter((message) => message.role === "user").length,
+        assistant: chatMessages.filter(
+          (message) => message.role === "assistant",
+        ).length,
+      };
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           characterId,
           model: chatModel,
-          messages: conversation.map((entry) => ({
-            role: entry.role,
-            content: entry.text,
-          })),
+          memory,
+          counts,
+          messages: chatMessages.slice(memory.summarizedCount),
         }),
       });
       const data = (await response.json()) as ChatResponse;
@@ -192,6 +281,11 @@ export function App() {
 
   function clearChat() {
     setHistory((current) => ({ ...current, [activeId]: [] }));
+    setMemories((current) => {
+      const updated = { ...current };
+      delete updated[activeId];
+      return updated;
+    });
     setShowMenu(false);
     setChatError("");
   }
@@ -460,7 +554,7 @@ export function App() {
               <button
                 type="submit"
                 className="send-button"
-                disabled={!draft.trim() || busy || !modelReady}
+                disabled={!draft.trim() || busy}
                 aria-label="发送消息"
               >
                 <Send size={17} />
@@ -469,6 +563,12 @@ export function App() {
           </form>
           <div className="composer-footnote">
             在这里，聊点让你开心的事。暂不聊新闻或政治。
+            {memories[activeId]?.summarizedCount > 0 && (
+              <span>
+                {" "}
+                已整理{memories[activeId].summarizedCount}条较早消息。
+              </span>
+            )}
           </div>
         </div>
       </main>
