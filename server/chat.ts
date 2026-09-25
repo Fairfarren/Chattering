@@ -27,7 +27,8 @@ type PreparedChat =
   | { kind: "photo"; text: string; photo: string }
   | { kind: "model"; body: OllamaBody };
 
-const photoRequest = /照片|相片|图片|自拍|看看你|发张图|photo|picture|selfie/i;
+const photoRequest =
+  /(?:发|给|来|拍|看|展示)[^。！？\n]{0,12}(?:照片|相片|图片|自拍|(?:一张|张)图)|(?:照片|相片|图片|自拍)[^。！？\n]{0,8}(?:发|给|看)|(?:send|show|share|see|want)[^.!?\n]{0,30}\b(?:photo|picture|selfie)\b/i;
 
 function validIdentity(input: { characterId: string; model: string }) {
   if (!input || typeof input !== "object") {

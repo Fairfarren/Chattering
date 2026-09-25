@@ -47,6 +47,22 @@ test("索要照片时返回本地资产", () => {
   );
 });
 
+test("只说看看你时继续交给模型", () => {
+  const result = prepareChat(
+    makeInput([{ role: "user", content: "给我看看你" }]),
+  );
+
+  assert.equal(result.kind, "model");
+});
+
+test("闲聊自拍时不会直接发送角色照片", () => {
+  const result = prepareChat(
+    makeInput([{ role: "user", content: "你喜欢自拍吗？" }]),
+  );
+
+  assert.equal(result.kind, "model");
+});
+
 for (const [characterId, name, expectedSetting] of [
   ["luzhaoshuang", "陆照霜", "架空江湖的秋夜"],
   ["linjianxing", "林见星", "远汐号"],
