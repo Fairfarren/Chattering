@@ -293,7 +293,7 @@ export function App() {
               <MessageCircle size={16} />
             </span>
             <span>
-              属于你的私密角落<small>聊天记录仅保存在此浏览器</small>
+              聊一会儿就好<small>记录仅保存在当前标签页</small>
             </span>
           </div>
           <div className="sidebar-footer">
@@ -317,7 +317,7 @@ export function App() {
             <div>
               <strong>{active.card.data.name}</strong>
               <span>
-                <i className="status-dot" /> 在线陪伴你
+                <i className="status-dot" /> 在这里聊一会儿
               </span>
             </div>
           </div>
@@ -336,7 +336,7 @@ export function App() {
               {showMenu && (
                 <div className="dropdown-menu">
                   <button onClick={clearChat} disabled={busy}>
-                    <Trash2 size={16} /> 开始新聊天
+                    <Trash2 size={16} /> 清空记录并开始新聊天
                   </button>
                   <button
                     onClick={() => {
@@ -395,7 +395,7 @@ export function App() {
             )}
 
             {messages.length > 0 && (
-              <div className="conversation-date">今天 · 一段轻松的对话</div>
+              <div className="conversation-date">本次 · 一段轻松的对话</div>
             )}
             {messages.map((message) => (
               <div key={message.id} className={`message-row ${message.role}`}>
@@ -497,7 +497,7 @@ export function App() {
             </div>
           </form>
           <div className="composer-footnote">
-            在这里，聊点让你开心的事。暂不聊新闻或政治。
+            只参考本次聊天的近期消息。暂不聊新闻或政治。
           </div>
         </div>
       </main>
