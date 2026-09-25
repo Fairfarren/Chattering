@@ -226,6 +226,15 @@ export function App() {
     setChatError("");
   }
 
+  function clearAllChats() {
+    if (busy) {
+      return;
+    }
+    setHistory({});
+    setShowMenu(false);
+    setChatError("");
+  }
+
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -338,6 +347,9 @@ export function App() {
                 <div className="dropdown-menu">
                   <button onClick={clearChat} disabled={busy}>
                     <Trash2 size={16} /> 清空记录并开始新聊天
+                  </button>
+                  <button onClick={clearAllChats} disabled={busy}>
+                    <Trash2 size={16} /> 结束会话并清空所有聊天
                   </button>
                   <button
                     onClick={() => {
