@@ -10,9 +10,6 @@ import {
 import type { ChatMessage } from "../conversation.ts";
 import { extractVisibleReply, incompleteReply } from "../reply.ts";
 
-export type { ChatMessage } from "../conversation.ts";
-export { isBlockedTopic, topicRefusal } from "../conversation.ts";
-
 export type ChatInput = {
   characterId: string;
   model: string;

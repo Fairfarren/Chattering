@@ -70,7 +70,7 @@ test("受限话题不会进入后续模型上下文", () => {
   );
 });
 
-test("完整浏览器记录能准确计算超过近期窗口的消息数", () => {
+test("本次聊天记录能准确计算超过近期窗口的消息数", () => {
   const messages: ChatMessage[] = Array.from({ length: 24 }, (_, index) => ({
     role: index % 2 === 0 ? "user" : "assistant",
     content: `测试消息${index + 1}`,
@@ -83,7 +83,7 @@ test("完整浏览器记录能准确计算超过近期窗口的消息数", () =>
   );
 });
 
-test("完整浏览器记录能找出用户第三句话", () => {
+test("本次聊天记录能找出用户第三句话", () => {
   const messages: ChatMessage[] = [
     { role: "user", content: "你好" },
     { role: "assistant", content: "你好呀" },
@@ -97,7 +97,7 @@ test("完整浏览器记录能找出用户第三句话", () => {
   assert.equal(answerHistoryQuestion(messages), "你说的第3条是：“一只猫”");
 });
 
-test("完整浏览器记录能找出角色第一句话", () => {
+test("本次聊天记录能找出角色第一句话", () => {
   const messages: ChatMessage[] = [
     { role: "user", content: "你好" },
     { role: "assistant", content: "你好呀" },
@@ -199,7 +199,7 @@ test("模型只返回英文思考时使用中文兜底回复", () => {
   );
 });
 
-test("旧聊天中的英文思考不会进入后续模型上下文", () => {
+test("先前回复中的英文思考不会进入后续模型上下文", () => {
   const result = prepareChat(
     makeInput([
       { role: "user", content: "踢它" },

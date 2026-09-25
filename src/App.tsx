@@ -16,6 +16,7 @@ import { characters, findCharacter } from "../characters";
 import {
   answerHistoryQuestion,
   isBlockedTopic,
+  maxMessageLength,
   recentMessages,
   topicRefusal,
 } from "../conversation";
@@ -479,7 +480,7 @@ export function App() {
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={handleKeyDown}
               rows={1}
-              maxLength={2000}
+              maxLength={maxMessageLength}
             />
             <div className="composer-bottom">
               <span>
