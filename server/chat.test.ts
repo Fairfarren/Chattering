@@ -8,6 +8,7 @@ import {
 } from "../conversation.ts";
 import type { ChatMessage } from "../conversation.ts";
 import { extractVisibleReply, incompleteReply } from "../reply.ts";
+import { characters, selectionConfirmation } from "../characters.ts";
 import { prepareChat, safeReply } from "./chat.ts";
 
 function makeMessages(count: number): ChatMessage[] {
@@ -95,6 +96,56 @@ for (const [characterId, name] of [
     );
   });
 }
+
+for (const [characterId, name, age] of [
+  ["cyrana", "希拉娜", "二十六岁"],
+  ["emily", "艾米莉", "二十二岁"],
+  ["cantarella", "坎特蕾拉", "三十五岁"],
+] as const) {
+  test(`${name}的聊天带有成年确认边界`, () => {
+    const result = prepareChat({ ...makeInput(), characterId });
+    const system =
+      result.kind === "model" ? result.body.messages[0].content : "";
+
+    assert.match(system, new RegExp(age));
+    assert.match(system, /成年人之间的虚构角色扮演/);
+    assert.doesNotMatch(system, /只聊日常/);
+  });
+
+  test(`${name}索要照片时返回对应资产`, () => {
+    const result = prepareChat({
+      ...makeInput([{ role: "user", content: "给我看看你的照片" }]),
+      characterId,
+    });
+
+    assert.equal(
+      result.kind === "photo" ? result.photo : null,
+      `/characters/${characterId}.jpg`,
+    );
+  });
+}
+
+test("需要确认的角色都标出了年龄和成人向", () => {
+  const confirmed = characters.filter(
+    (character) => "confirmation" in character,
+  );
+
+  assert.deepEqual(
+    confirmed.map((character) => character.id),
+    ["cyrana", "emily", "cantarella"],
+  );
+  for (const character of confirmed) {
+    const confirmation = selectionConfirmation(character);
+    if (!confirmation) {
+      continue;
+    }
+    const labels = confirmation.notes.map((note) => note.label);
+    assert.ok(labels.includes("年龄"));
+    assert.ok(labels.includes("成人向"));
+    assert.ok(labels.includes("使用条件"));
+    assert.ok(labels.includes("场景标注"));
+  }
+});
 
 test("新闻话题会被拒绝", () => {
   const result = prepareChat(
