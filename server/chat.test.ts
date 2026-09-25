@@ -183,6 +183,41 @@ test("本次聊天记录能准确计算超过近期窗口的消息数", () => {
   );
 });
 
+for (const content of [
+  "站着说几句就走。",
+  "我说几句真话。",
+  "我说几句体己话。",
+  "我随便说几句。",
+  "聊几句就走。",
+  "我跟你说几句话。",
+  "我回复几句就下线。",
+  "他发了几条消息你看见没。",
+  "我发几句话。",
+  "你聊几句就知道。",
+  "你上次说的第几句话来着。",
+  "这几句话我攒了两年。",
+]) {
+  test(`正常叙述「${content}」不会触发消息计数`, () => {
+    const messages: ChatMessage[] = [{ role: "user", content }];
+
+    const answer = answerHistoryQuestion(messages);
+
+    assert.equal(answer, null);
+  });
+}
+
+test("询问聊了几句时仍返回准确消息数", () => {
+  const messages: ChatMessage[] = [
+    { role: "user", content: "你好" },
+    { role: "assistant", content: "你好呀" },
+    { role: "user", content: "我们聊了几句？" },
+  ];
+
+  const answer = answerHistoryQuestion(messages);
+
+  assert.equal(answer, "截至你刚发的这句，你发了2条，我回复了1条，共3条消息。");
+});
+
 test("本次聊天记录能找出用户第三句话", () => {
   const messages: ChatMessage[] = [
     { role: "user", content: "你好" },

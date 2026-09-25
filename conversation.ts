@@ -77,7 +77,11 @@ export function answerHistoryQuestion(messages: ChatMessage[]) {
   if (!latest || latest.role !== "user") {
     return null;
   }
-  if (/(?:聊|说|发|回复).{0,8}(?:多少|几)(?:句|条|轮)/.test(latest.content)) {
+  if (
+    /(?:聊|说|发|回复)[^。！？?\n第]{0,8}(?:多少|几)(?:句|条|轮)(?:话|消息)?[？?]$/.test(
+      latest.content.trim(),
+    )
+  ) {
     const userCount = messages.filter(
       (message) => message.role === "user",
     ).length;
