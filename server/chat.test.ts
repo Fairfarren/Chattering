@@ -47,6 +47,39 @@ test("索要照片时返回本地资产", () => {
   );
 });
 
+for (const [characterId, name, expectedSetting] of [
+  ["luzhaoshuang", "陆照霜", "架空江湖的秋夜"],
+  ["linjianxing", "林见星", "远汐号"],
+  ["evelyn", "伊芙琳", "钟楼古书馆"],
+] as const) {
+  test(`${name}聊天会带入专属场景`, () => {
+    const result = prepareChat({ ...makeInput(), characterId });
+
+    assert.match(
+      result.kind === "model" ? result.body.messages[0].content : "",
+      new RegExp(expectedSetting),
+    );
+  });
+}
+
+for (const [characterId, name] of [
+  ["luzhaoshuang", "陆照霜"],
+  ["linjianxing", "林见星"],
+  ["evelyn", "伊芙琳"],
+] as const) {
+  test(`${name}索要照片时返回对应资产`, () => {
+    const result = prepareChat({
+      ...makeInput([{ role: "user", content: "给我看看你的照片" }]),
+      characterId,
+    });
+
+    assert.equal(
+      result.kind === "photo" ? result.photo : null,
+      `/characters/${characterId}.jpg`,
+    );
+  });
+}
+
 test("新闻话题会被拒绝", () => {
   const result = prepareChat(
     makeInput([{ role: "user", content: "今天有什么新闻？" }]),
