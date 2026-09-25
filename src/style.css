@@ -147,6 +147,13 @@ textarea:focus-visible {
   font-size: 13px;
   font-weight: 600;
 }
+.confirm-badge {
+  margin-left: 6px;
+  color: #e0a58e;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 600;
+}
 .character-item-copy small {
   font-size: 11px;
   color: #898285;
@@ -780,6 +787,84 @@ textarea:focus-visible {
 .profile-end span {
   color: #b08b7e;
   margin-right: 4px;
+}
+.confirm-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: #080709e8;
+  padding: 24px;
+}
+.confirm-card {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: min(82vh, 760px);
+  overflow: hidden;
+  padding: 22px 22px 18px;
+  border: 1px solid #5a463f;
+  border-radius: 14px;
+  background: #221c1b;
+  box-shadow: 0 30px 80px #0009;
+}
+.confirm-kicker {
+  margin: 0;
+  color: #e0a58e;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.confirm-card h2 {
+  margin: 8px 0 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+.confirm-verdict {
+  margin: 8px 0 16px;
+  color: #f0e2d8;
+  font-size: 13px;
+}
+.confirm-card dl {
+  margin: 0;
+  overflow: auto;
+  min-height: 0;
+  padding-right: 4px;
+}
+.confirm-card dl div + div {
+  margin-top: 12px;
+}
+.confirm-card dt {
+  color: #d1a38f;
+  font-size: 11px;
+  font-weight: 600;
+}
+.confirm-card dd {
+  margin: 4px 0 0;
+  color: #c9bfba;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+.confirm-actions button {
+  border: 1px solid #5a463f;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #e8e4df;
+  background: transparent;
+}
+.confirm-enter {
+  border-color: #78554c !important;
+  color: #f0e2d8 !important;
+  background: #332826 !important;
+}
+.profile-confirmation {
+  margin-top: 8px;
 }
 .photo-lightbox {
   position: fixed;

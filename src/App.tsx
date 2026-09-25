@@ -12,7 +12,11 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { characters, findCharacter } from "../characters";
+import {
+  characters,
+  findCharacter,
+  selectionConfirmation,
+} from "../characters";
 import {
   answerHistoryQuestion,
   isBlockedTopic,
@@ -93,9 +97,15 @@ export function App() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [previewPhoto, setPreviewPhoto] = useState("");
   const [showMenu, setShowMenu] = useState(false);
+  const [pendingId, setPendingId] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const active = findCharacter(activeId)!;
+  const pending = findCharacter(pendingId);
+  const pendingConfirmation = pending
+    ? selectionConfirmation(pending)
+    : undefined;
+  const activeConfirmation = selectionConfirmation(active);
   const messages = history[activeId] || [];
   const portrait = active.card.data.assets[0].uri;
   const introduction = `${active.card.data.description.split("。", 1)[0]}。`;
@@ -213,9 +223,23 @@ export function App() {
 
   function selectCharacter(id: string) {
     setActiveId(id);
+    setPendingId("");
     setDraft("");
     setChatError("");
     setShowSidebar(false);
+  }
+
+  function requestCharacter(id: string) {
+    if (id === activeId) {
+      setShowSidebar(false);
+      return;
+    }
+    const next = findCharacter(id);
+    if (next && "confirmation" in next) {
+      setPendingId(id);
+      return;
+    }
+    selectCharacter(id);
   }
 
   function clearChat() {
@@ -282,14 +306,19 @@ export function App() {
               <button
                 key={character.id}
                 className={`character-item ${selected ? "selected" : ""}`}
-                onClick={() => selectCharacter(character.id)}
+                onClick={() => requestCharacter(character.id)}
               >
                 <span className="avatar-wrap">
                   <img src={image} alt="" />
                   <span className="online-dot" />
                 </span>
                 <span className="character-item-copy">
-                  <strong>{character.card.data.name}</strong>
+                  <strong>
+                    {character.card.data.name}
+                    {"confirmation" in character && (
+                      <em className="confirm-badge">需确认</em>
+                    )}
+                  </strong>
                   <small>{preview || character.subtitle}</small>
                 </span>
                 {last && <span className="last-time">{last.time}</span>}
@@ -541,6 +570,18 @@ export function App() {
             <span key={tag}>{tag}</span>
           ))}
         </div>
+        {activeConfirmation && (
+          <div className="profile-confirmation">
+            <div className="profile-label">选用确认</div>
+            <p className="profile-text">{activeConfirmation.verdict}</p>
+            {activeConfirmation.notes.map((note) => (
+              <div key={note.label}>
+                <div className="profile-label">{note.label}</div>
+                <p className="profile-text">{note.text}</p>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="profile-divider" />
         <div className="profile-label">关于我</div>
         <p className="profile-text">{active.card.data.description}</p>
@@ -563,6 +604,45 @@ export function App() {
           <span>✦</span> 好的对话，从一句你好开始
         </div>
       </aside>
+
+      {pendingConfirmation && pending && (
+        <div
+          className="confirm-layer"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-title"
+          onClick={() => setPendingId("")}
+        >
+          <div
+            className="confirm-card"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="confirm-kicker">二次确认</p>
+            <h2 id="confirm-title">{pending.card.data.name}</h2>
+            <p className="confirm-verdict">{pendingConfirmation.verdict}</p>
+            <dl>
+              {pendingConfirmation.notes.map((note) => (
+                <div key={note.label}>
+                  <dt>{note.label}</dt>
+                  <dd>{note.text}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="confirm-actions">
+              <button type="button" onClick={() => setPendingId("")}>
+                返回
+              </button>
+              <button
+                type="button"
+                className="confirm-enter"
+                onClick={() => selectCharacter(pending.id)}
+              >
+                确认进入
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {previewPhoto && (
         <div

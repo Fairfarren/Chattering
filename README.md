@@ -1,6 +1,6 @@
 # 絮语
 
-一个精简的 Web 角色聊天应用：从五位角色中选择聊天伙伴，用本机 Ollama 服务连接 `kimi-k2.7-code:cloud`，在聊天中向角色索要照片。本次聊天记录只保存在当前浏览器标签页。
+一个精简的 Web 角色聊天应用：从八位角色中选择聊天伙伴，用本机 Ollama 服务连接 `kimi-k2.7-code:cloud`，在聊天中向角色索要照片。本次聊天记录只保存在当前浏览器标签页。希拉娜、艾米莉、坎特蕾拉点选时会先弹出二次确认，标出年龄、成人向和限制。
 
 ## 启动
 
@@ -29,6 +29,8 @@ pnpm dev
 莉香和柚子的图片取自 [RisuAI](https://github.com/kwaroran/Risuai) 仓库：[`rika.png`](https://github.com/kwaroran/Risuai/blob/main/public/sample/rika.png)、[`yuzu.png`](https://github.com/kwaroran/Risuai/blob/main/public/sample/yuzu.png)，对应上游提交 `25001174e0452e3b9d16aee459ce9d2444c197d7`。两人的角色设定由本项目编写，项目随附上游 GPL-3.0 许可文本。
 
 陆照霜、林见星与伊芙琳·维尔是本项目创作的架空人物，肖像由 imagegen 生成。三人的细节分别参考[大都会艺术博物馆的中国剑器研究](https://resources.metmuseum.org/resources/metpublications/pdf/Notable_Sabers_of_the_Qing_Dynasty_at_MMA_The_Metropolitan_Museum_Journal_v_36_2001.pdf)、[NASA 航天器导航资料](https://www.nasa.gov/reference/avionics-and-software/)与[美国国会图书馆的藏书保护指南](https://guides.loc.gov/preserving-your-books/handling)；这些资料只用于背景考据，人物、地点和故事均为原创虚构。全部角色的数据字段参考 [Character Card V3 规范](https://github.com/kwaroran/character-card-spec-v3/blob/main/SPEC_V3.md)。每位角色目前只有一张图片，索要照片时发送对应的本地资产。
+
+希拉娜·亮风、艾米莉、坎特蕾拉·翡萨烈整理自 Chub 公开角色卡，分别来自 [Queen Cyrana](https://chub.ai/characters/SecretApe/queen-cyrana-bound-by-duty-72fbc76db7c6)、[Emily](https://chub.ai/characters/SecretApe/emily-s-rank-adventurer-chose-you-6de464e3bcca) 和 [坎特蕾拉·翡萨烈](https://chub.ai/characters/luoyicongniubi/kan-te-lei-la-fei-sa-lie-ab89c11763b9)。点选这三人时必须先阅读标注并确认；肖像由 imagegen 生成，不是原卡封面。
 
 ## 话题限制
 
