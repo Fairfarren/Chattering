@@ -98,6 +98,7 @@ export function App() {
   const active = findCharacter(activeId)!;
   const messages = history[activeId] || [];
   const portrait = active.card.data.assets[0].uri;
+  const introduction = `${active.card.data.description.split("。", 1)[0]}。`;
 
   useEffect(() => {
     sessionStorage.setItem(storageKey, JSON.stringify(history));
@@ -383,9 +384,7 @@ export function App() {
                   <em>聊聊今天。</em>
                 </h1>
                 <p className="welcome-quote">“{active.quote}”</p>
-                <p className="welcome-description">
-                  {active.card.data.description}
-                </p>
+                <p className="welcome-description">{introduction}</p>
                 <div className="suggestion-row">
                   <button
                     onClick={() => {
@@ -547,6 +546,10 @@ export function App() {
         <p className="profile-text">{active.card.data.description}</p>
         <div className="profile-label">性格小记</div>
         <p className="profile-text">{active.card.data.personality}</p>
+        <div className="profile-label">相遇场景</div>
+        <p className="profile-text">{active.card.data.scenario}</p>
+        <div className="profile-label">初见对白</div>
+        <p className="profile-text">“{active.card.data.first_mes}”</p>
         <button
           className="profile-photo-button"
           onClick={() => {
@@ -554,7 +557,7 @@ export function App() {
             textareaRef.current?.focus();
           }}
         >
-          <Camera size={17} /> 请她发张照片 <ArrowUp size={15} />
+          <Camera size={17} /> 请发张照片 <ArrowUp size={15} />
         </button>
         <div className="profile-end">
           <span>✦</span> 好的对话，从一句你好开始
