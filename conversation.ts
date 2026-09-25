@@ -86,7 +86,7 @@ export function answerHistoryQuestion(messages: ChatMessage[]) {
   }
 
   const match = latest.content.match(
-    /([我你])[^。！？\n]{0,12}?第([一二两三四五六七八九十百\d]+)(?:句|条)(?:话|消息)?/,
+    /([我你])(?:跟[我你])?(?:刚才|之前)?(?:说|发|回复)?的?第([一二两三四五六七八九十百\d]+)(?:句|条)(?:话|消息)?(?:是(?:什么|啥)|(?:说|发)了(?:什么|啥))[？?]?$/,
   );
   if (!match) {
     return null;

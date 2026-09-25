@@ -151,6 +151,27 @@ test("超出记录范围的序号不会猜测", () => {
   );
 });
 
+test("引用第三句内容不会触发历史问答", () => {
+  const messages: ChatMessage[] = [
+    { role: "assistant", content: "第一句" },
+    { role: "assistant", content: "第二句" },
+    { role: "assistant", content: "第三句" },
+    { role: "user", content: "你三句里的第三句'不靠近超过一臂'，我记着。" },
+  ];
+
+  assert.equal(answerHistoryQuestion(messages), null);
+});
+
+test("列举第一条和第二条的修改不会触发历史问答", () => {
+  const messages: ChatMessage[] = [
+    { role: "assistant", content: "第一条" },
+    { role: "assistant", content: "第二条" },
+    { role: "user", content: "你把第一、第二条都改了。" },
+  ];
+
+  assert.equal(answerHistoryQuestion(messages), null);
+});
+
 test("近期上下文最多保留十二条消息", () => {
   const messages = makeMessages(20);
 
