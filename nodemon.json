@@ -1,0 +1,11 @@
+{
+  "watch": [
+    "characters.ts",
+    "conversation.ts",
+    "reply.ts",
+    "server/chat.ts",
+    "server/index.ts"
+  ],
+  "ext": "ts",
+  "exec": "node --env-file-if-exists=.env server/index.ts"
+}
