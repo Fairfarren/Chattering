@@ -64,6 +64,46 @@ test("闲聊自拍时不会直接发送角色照片", () => {
   assert.equal(result.kind, "model");
 });
 
+for (const content of [
+  "我拍了一张图,回头给你看。",
+  "我拍了一张照片,回头给你看。",
+  "我有一张照片，等会儿发给你。",
+  "我想给你看我的照片。",
+  "发给你一张照片，收到了吗？",
+  "发一张照片给你，回头看看。",
+  "I can show you my photo.",
+]) {
+  test(`展示自己的照片「${content}」继续交给模型`, () => {
+    const input = makeInput([{ role: "user", content }]);
+
+    const result = prepareChat(input);
+
+    assert.equal(result.kind, "model");
+  });
+}
+
+for (const content of [
+  "给我看看你的照片",
+  "发张图",
+  "发一张照片给我",
+  "我想看你的自拍",
+  "给我看看你的照片吧",
+  "能给我看看你的照片吗？",
+  "Show me your photo.",
+  "I want to see your photo.",
+]) {
+  test(`索要角色照片「${content}」返回本地资产`, () => {
+    const input = makeInput([{ role: "user", content }]);
+
+    const result = prepareChat(input);
+
+    assert.equal(
+      result.kind === "photo" ? result.photo : null,
+      "/characters/rika.png",
+    );
+  });
+}
+
 for (const [characterId, name, expectedSetting] of [
   ["luzhaoshuang", "陆照霜", "架空江湖的秋夜"],
   ["linjianxing", "林见星", "远汐号"],

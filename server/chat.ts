@@ -27,8 +27,11 @@ type PreparedChat =
   | { kind: "photo"; text: string; photo: string }
   | { kind: "model"; body: OllamaBody };
 
-const photoRequest =
-  /(?:发|给|来|拍|看|展示)[^。！？\n]{0,12}(?:照片|相片|图片|自拍|(?:一张|张)图)|(?:照片|相片|图片|自拍)[^。！？\n]{0,8}(?:发|给|看)|(?:send|show|share|see|want)[^.!?\n]{0,30}\b(?:photo|picture|selfie)\b/i;
+const photoRequests = [
+  /^(?![^。！？\n]{0,25}给(?:你|他|她))(?:请|麻烦|能|可以|能不能|你能|你可以|你能不能)?(?:你)?(?:给我(?:看看?)?|发(?:给我)?|来(?:一张|张)|展示给我|看看?你)[^。！？\n]{0,12}(?:照片|相片|图片|自拍|(?:一张|张)图)/,
+  /^(?:我)?(?:想|要)(?:看(?:看)?|要)你(?:的)?[^。！？\n]{0,8}(?:照片|相片|图片|自拍|(?:一张|张)图)/,
+  /^(?:(?:please\s+)?(?:send|show|share)\s+me|i\s+(?:want|would like)\s+to\s+see\s+your)[^.!?\n]{0,30}\b(?:photo|picture|selfie)\b/i,
+];
 
 function validIdentity(input: { characterId: string; model: string }) {
   if (!input || typeof input !== "object") {
@@ -83,7 +86,7 @@ export function prepareChat(input: ChatInput): PreparedChat {
   if (isBlockedTopic(latest.content)) {
     return { kind: "text", text: topicRefusal };
   }
-  if (photoRequest.test(latest.content)) {
+  if (photoRequests.some((request) => request.test(latest.content))) {
     const photo = character.card.data.assets.find(
       (asset) => asset.type === "x_photo",
     );
