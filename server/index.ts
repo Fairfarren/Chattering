@@ -4,13 +4,8 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { ViteDevServer } from "vite";
-import {
-  buildSummaryBody,
-  prepareChat,
-  safeReply,
-  summaryReply,
-} from "./chat.ts";
-import type { ChatInput, CompactInput } from "./chat.ts";
+import { prepareChat, safeReply } from "./chat.ts";
+import type { ChatInput } from "./chat.ts";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const port = Number(process.env.PORT || 3000);
@@ -125,41 +120,6 @@ async function handleApi(request: IncomingMessage, response: ServerResponse) {
       });
     } catch (error) {
       sendJson(response, 503, { error: `聊天失败：${errorMessage(error)}` });
-    }
-    return true;
-  }
-
-  if (request.method === "POST" && request.url === "/api/compact") {
-    let input: CompactInput;
-    let body;
-    try {
-      input = (await readBody(request)) as CompactInput;
-      body = buildSummaryBody(input);
-    } catch (error) {
-      sendJson(response, 400, { error: errorMessage(error) });
-      return true;
-    }
-    if (!body) {
-      sendJson(response, 200, { summary: input.previousSummary });
-      return true;
-    }
-    try {
-      const models = await listModels();
-      if (!models.some((model) => model.name === body.model)) {
-        sendJson(response, 400, { error: "所选模型在 Ollama 中不存在" });
-        return true;
-      }
-      const result = (await ollamaRequest("/api/chat", {
-        method: "POST",
-        body: JSON.stringify(body),
-      })) as { message?: { content?: string } };
-      sendJson(response, 200, {
-        summary: summaryReply(result.message?.content),
-      });
-    } catch (error) {
-      sendJson(response, 503, {
-        error: `整理记忆失败：${errorMessage(error)}`,
-      });
     }
     return true;
   }

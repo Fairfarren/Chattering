@@ -3,18 +3,12 @@ import test from "node:test";
 import {
   answerHistoryQuestion,
   isBlockedTopic,
-  nextCompactBatch,
-  normalizeMemory,
+  recentMessages,
   topicRefusal,
 } from "../conversation.ts";
 import type { ChatMessage } from "../conversation.ts";
 import { extractVisibleReply, incompleteReply } from "../reply.ts";
-import {
-  buildSummaryBody,
-  prepareChat,
-  safeReply,
-  summaryReply,
-} from "./chat.ts";
+import { prepareChat, safeReply } from "./chat.ts";
 
 function makeMessages(count: number): ChatMessage[] {
   return Array.from({ length: count }, (_, index) => ({
@@ -30,21 +24,15 @@ function makeInput(
     characterId: "rika",
     model: "kimi-k2.7-code:cloud",
     messages,
-    memory: { summary: "", summarizedCount: 0 },
-    counts: {
-      user: messages.filter((message) => message.role === "user").length,
-      assistant: messages.filter((message) => message.role === "assistant")
-        .length,
-    },
   };
 }
 
-test("普通聊天会使用角色性格和准确消息数", () => {
+test("普通聊天会使用角色性格并限制记忆范围", () => {
   const result = prepareChat(makeInput());
 
   assert.match(
     result.kind === "model" ? result.body.messages[0].content : "",
-    /开朗、真诚.*用户发了1条/s,
+    /开朗、真诚.*不要声称记得未提供的早期对话/s,
   );
 });
 
@@ -130,105 +118,49 @@ test("超出记录范围的序号不会猜测", () => {
   );
 });
 
-test("压缩只取最近窗口之前的一小批消息", () => {
-  const messages = makeMessages(40);
+test("近期上下文最多保留十二条消息", () => {
+  const messages = makeMessages(20);
 
-  assert.equal(
-    nextCompactBatch(messages, { summary: "", summarizedCount: 0 }).length,
-    16,
-  );
+  assert.deepEqual(recentMessages(messages), messages.slice(-12));
 });
 
-test("增量压缩达到阈值时只取未整理消息", () => {
-  const messages = makeMessages(28);
+test("近期上下文按总长度截断旧消息", () => {
+  const messages = makeMessages(5).map((message) => ({
+    ...message,
+    content: "聊".repeat(2000),
+  }));
 
-  assert.equal(
-    nextCompactBatch(messages, { summary: "喜欢蓝色", summarizedCount: 8 })[0]
-      .content,
-    "测试消息9",
-  );
+  assert.deepEqual(recentMessages(messages), messages.slice(-4));
 });
 
-test("不足八条旧消息时不压缩", () => {
-  const messages = makeMessages(19);
-
-  assert.equal(
-    nextCompactBatch(messages, { summary: "", summarizedCount: 0 }).length,
-    0,
-  );
-});
-
-test("无效记忆位置会从头重新整理", () => {
-  const memory = normalizeMemory(
-    { summary: "旧记忆", summarizedCount: 99 },
-    24,
-  );
-
-  assert.deepEqual(memory, { summary: "", summarizedCount: 0 });
-});
-
-test("摘要请求会排除受限话题和泄露的思考文本", () => {
-  const body = buildSummaryBody({
-    characterId: "rika",
-    model: "kimi-k2.7-code:cloud",
-    previousSummary: "",
-    messages: [
-      { role: "user", content: "今天有什么新闻？" },
-      {
-        role: "assistant",
-        content: "The user asked about a flower.</think>用户喜欢蓝色。",
-      },
-    ],
-  });
-
-  assert.match(body?.messages[1].content || "", /角色：用户喜欢蓝色。/);
-});
-
-test("摘要回复会剔除思考过程", () => {
-  assert.equal(
-    summaryReply("<think>Summarize this.</think>用户喜欢蓝色。"),
-    "用户喜欢蓝色。",
-  );
-});
-
-test("模型只收到短期消息与已有记忆", () => {
-  const input = makeInput(makeMessages(19).slice(7));
-  input.memory = { summary: "用户喜欢蓝色。", summarizedCount: 7 };
-  input.counts = { user: 10, assistant: 9 };
+test("模型上下文不会加入旧摘要", () => {
+  const input = {
+    ...makeInput([{ role: "user" as const, content: "今天画画" }]),
+    memory: { summary: "旧用户喜欢蓝色", summarizedCount: 10 },
+  };
 
   const result = prepareChat(input);
 
-  assert.match(
-    result.kind === "model" ? result.body.messages[0].content : "",
-    /较早对话记忆：用户喜欢蓝色。/,
+  assert.doesNotMatch(
+    result.kind === "model" ? JSON.stringify(result.body) : "",
+    /旧用户喜欢蓝色/,
   );
 });
 
-test("超过短期消息上限会明确报错", () => {
+test("超过近期消息上限会明确报错", () => {
   assert.throws(
-    () => prepareChat(makeInput(makeMessages(20))),
+    () => prepareChat(makeInput(makeMessages(13))),
     /聊天记录格式无效/,
   );
 });
 
-test("消息数与记忆位置不一致会报错", () => {
-  const input = makeInput();
-  input.memory = { summary: "", summarizedCount: 10 };
+test("超过上下文长度上限会明确报错", () => {
+  const messages = makeMessages(5).map((message) => ({
+    ...message,
+    content: "聊".repeat(2000),
+  }));
 
-  assert.throws(() => prepareChat(input), /聊天记忆与消息数量不一致/);
-});
-
-test("摘要批次超过上限会报错", () => {
-  assert.throws(
-    () =>
-      buildSummaryBody({
-        characterId: "rika",
-        model: "kimi-k2.7-code:cloud",
-        previousSummary: "",
-        messages: makeMessages(17),
-      }),
-    /聊天记录格式无效/,
-  );
+  assert.throws(() => prepareChat(makeInput(messages)), /聊天上下文过长/);
 });
 
 test("政治话题会被拒绝", () => {

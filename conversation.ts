@@ -1,13 +1,27 @@
 import { extractVisibleReply } from "./reply.ts";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
-export type ConversationMemory = { summary: string; summarizedCount: number };
 
 export const recentMessageCount = 12;
-export const minCompactMessages = 8;
-export const summaryBatchSize = 16;
-export const maxSummaryLength = 500;
 export const maxMessageLength = 2000;
+export const maxContextLength = 8000;
+
+export function recentMessages(messages: ChatMessage[]) {
+  const selected: ChatMessage[] = [];
+  let length = 0;
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index];
+    if (
+      selected.length === recentMessageCount ||
+      length + message.content.length > maxContextLength
+    ) {
+      break;
+    }
+    selected.unshift(message);
+    length += message.content.length;
+  }
+  return selected;
+}
 
 const blockedTopic =
   /新闻|时事|热点事件|头条|快讯|选举|投票|政党|政治|政客|政府|总统|议会|国会|首相|外交|战争|国际局势|news\b|current events|breaking story|headline|election|politic|government|president|parliament|congress|prime minister|geopolitic/i;
@@ -90,39 +104,4 @@ export function answerHistoryQuestion(messages: ChatMessage[]) {
   return answer
     ? `${label}说的第${number}条是：“${answer.content}”`
     : topicRefusal;
-}
-
-export function normalizeMemory(
-  memory: unknown,
-  messageCount: number,
-): ConversationMemory {
-  const recentStart = Math.max(0, messageCount - recentMessageCount);
-  if (
-    !memory ||
-    typeof memory !== "object" ||
-    !("summary" in memory) ||
-    typeof memory.summary !== "string" ||
-    memory.summary.length > maxSummaryLength ||
-    !("summarizedCount" in memory) ||
-    !Number.isInteger(memory.summarizedCount) ||
-    Number(memory.summarizedCount) < 0 ||
-    Number(memory.summarizedCount) > recentStart
-  ) {
-    return { summary: "", summarizedCount: 0 };
-  }
-  return memory as ConversationMemory;
-}
-
-export function nextCompactBatch(
-  messages: ChatMessage[],
-  memory: ConversationMemory,
-) {
-  const compactUntil = Math.max(0, messages.length - recentMessageCount);
-  if (compactUntil - memory.summarizedCount < minCompactMessages) {
-    return [];
-  }
-  return messages.slice(
-    memory.summarizedCount,
-    Math.min(compactUntil, memory.summarizedCount + summaryBatchSize),
-  );
 }
